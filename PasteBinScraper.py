@@ -1,8 +1,8 @@
 from IScraper import *
 import DTOs
 
-class PasteBinScraper(IScraper):
 
+class PasteBinScraper(IScraper):
     def __init__(self, options: ExecutionOption):
         self.Name = "PasteBinIScraper"
         self.Items = {}
@@ -19,7 +19,6 @@ class PasteBinScraper(IScraper):
             self.EnumerateRecentPastes(bsoupAll)
         else:
             self.SerializePublicPaste(url, bsoupAll)
-
 
     def SerializePublicPaste(self, url, bsoupAll: bs4.BeautifulSoup):
 
