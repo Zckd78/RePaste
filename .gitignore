@@ -60,3 +60,5 @@ target/
 *.xml
 
 \.idea/
+
+PasteBinCaps/

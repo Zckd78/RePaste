@@ -1,24 +1,20 @@
-import bs4
-import requests
-from PasteObj import *
-import re
-from DTOs import *
-import os
-import threading
+from IScraper import *
+import DTOs
 
+class PasteBinScraper(IScraper):
 
-class Scraper():
     def __init__(self, options: ExecutionOption):
-        self.Name = "PasteBinScraper"
+        self.Name = "PasteBinIScraper"
         self.Items = {}
         self.ExecutionOptions = options
 
+    ## Root Function - Navigates to a page, and decides what to do from there.
     def Go(self, url, forceEnum=False):
 
         res = self.GetRequest(url)
         bsoupAll = self.BuildSoup(res)
 
-        # Zero means we're in the PasteBin Index
+        # Zero means we're on the Index page
         if self.DetermineDir(url) == 0 or forceEnum:
             self.EnumerateRecentPastes(bsoupAll)
         else:
@@ -43,9 +39,9 @@ class Scraper():
 
             if self.ExecutionOptions.isDebug():
                 fifth = int((len(raw)) / 5)
-                title = "Serializing [%s]" % (url)
-                title = title.center(100, '-')
-                print(title)
+                dTitle = "Serializing [%s]" % (url)
+                dTitle = dTitle.center(100, '-')
+                print(dTitle)
                 print("Paste Raw Snippet".center(100, '-'))
                 print(raw[0:fifth])
 
@@ -88,7 +84,7 @@ class Scraper():
         try:
             res.raise_for_status()
         except Exception as exc:
-            print('Error in Scraper: %s' % (exc))
+            print('Error in IScraper: %s' % (exc))
             return
 
         return res

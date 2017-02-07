@@ -1,10 +1,17 @@
+## DTO stands for Data Transfer Objects.
+## I use these as custom object for transporting data around in functions and files.
 
 class Statics():
-
     PASTE_BIN_URI = "http://pastebin.com"
 
-class ExecutionOption():
 
+class IOSettings():
+    def __init__(self, title, folder):
+        self.Title = title
+        self.StorageFolder = folder
+
+
+class ExecutionOption():
     EXECUTION_MODE = "Live"
 
     def __init__(self):
