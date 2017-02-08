@@ -10,45 +10,55 @@ class PasteBinScraper(IScraper):
 
     ## Root Function - Navigates to a page, and decides what to do from there.
     def Go(self, url, forceEnum=False):
-
-        res = self.GetRequest(url)
-        bsoupAll = self.BuildSoup(res)
-
         # Zero means we're on the Index page
         if self.DetermineDir(url) == 0 or forceEnum:
+            res = self.GetRequest(url)
+            bsoupAll = self.BuildSoup(res)
             self.EnumerateRecentPastes(bsoupAll)
         else:
-            self.SerializePublicPaste(url, bsoupAll)
+            title = url.split('/')[3]
+            # We only want new pastes
+            if title not in self.Items:
+                res = self.GetRequest(url)
+                bsoupAll = self.BuildSoup(res)
+                self.SerializePublicPaste(url, bsoupAll)
+            else:
+                if self.ExecutionOptions.isDebug():
+                    title = "! Already Tried {" + url + "} - Waiting " + str(self.ExecutionOptions.HALT_TIME) + " seconds !"
+                    self.PrintDebugTitle(title)
+                    time.sleep(self.ExecutionOptions.HALT_TIME)
 
     def SerializePublicPaste(self, url, bsoupAll: bs4.BeautifulSoup):
 
         title = url.split('/')[3]
-        # We only want new pastes
-        if title not in self.Items:
-
-            # Serialize the items on page into objects
-            poster = bsoupAll.select(".paste_box_frame > .paste_box_info > .paste_box_line1 > h1")[0].text
-            date = bsoupAll.select(".paste_box_frame > .paste_box_info > .paste_box_line2 > img > img > span")[0].attrs[
-                'title']
-            expires = \
-                bsoupAll.select(".paste_box_frame > .paste_box_info > .paste_box_line2 > img > img")[0].contents[
-                    3].text.split(
-                    '\t')[4].replace('\r', '').replace('\n', '').replace(' ', '')
-            raw = bsoupAll.select(".paste_code")[0].text
-
-            if self.ExecutionOptions.isDebug():
-                fifth = int((len(raw)) / 5)
-                dTitle = "Serializing [%s]" % (url)
-                dTitle = dTitle.center(100, '-')
-                print(dTitle)
-                print("Paste Raw Snippet".center(100, '-'))
-                print(raw[0:fifth])
-
-            self.Items[title] = PublicPaste(url, poster, title, date, expires, raw)
+        # Serialize the items on page into objects
+        poster = bsoupAll.select(".paste_box_frame > .paste_box_info > .paste_box_line1 > h1")[0].text
+        date = bsoupAll.select(".paste_box_frame > .paste_box_info > .paste_box_line2 > img > img > span")[0].attrs[
+            'title']
+        expires = \
+            bsoupAll.select(".paste_box_frame > .paste_box_info > .paste_box_line2 > img > img")[0].contents[
+                3].text.split(
+                '\t')
+        # Catching where sometimes the expiration date doesn't parse this way.
+        if len(expires) > 3:
+            expires = expires[4].replace('\r', '').replace('\n', '').replace(' ', '')
         else:
-            if self.ExecutionOptions.isDebug():
-                print("\r\nAlready Serialized [%s]\r\n" % (url))
-            return
+            expires = "UnParsed"
+        raw = (bsoupAll.select(".paste_code")[0].text)
+
+        if self.ExecutionOptions.isDebug():
+            fifth = int((len(raw)) / 5)
+            self.PrintDebugTitle("Serializing [%s]" % (url))
+            self.PrintDebugTitle("Paste Raw Snippet")
+            try:
+                print(str(raw[0:fifth]))
+            except:
+                e = sys.exc_info()[0]
+                print(" Error in PasteBinScraper : " + str(e))
+
+        self.Items[title] = PublicPaste(url, poster, title, date, expires, raw)
+
+        return
 
     # Quick check to see if we're still on the Index of Pastebin, or a Public Paste
     def DetermineDir(self, url):
@@ -69,6 +79,7 @@ class PasteBinScraper(IScraper):
             uri = Statics.PASTE_BIN_URI + tag.contents[0].attrs['href']
             work = threading.Thread(self.Go(uri))
             work.start()
+            time.sleep(self.ExecutionOptions.THROTTLE_TIME)
 
     def BuildSoup(self, res):
         # Create the Beautiful Soup Object
@@ -87,3 +98,7 @@ class PasteBinScraper(IScraper):
             return
 
         return res
+
+    def PrintDebugTitle(self, text: str):
+        output = "[> " + text + " <]"
+        print(output.center(80, '~'))

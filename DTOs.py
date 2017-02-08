@@ -11,17 +11,22 @@ class IOSettings():
         self.StorageFolder = folder
 
 
+
 class ExecutionOption():
-    EXECUTION_MODE = "Live"
 
     def __init__(self):
         self.EXECUTION_MODE = "Live"
+        self.THROTTLE_TIME = 1
+        self.HALT_TIME = 2
 
     def isDebug(self):
         if self.EXECUTION_MODE == "Live":
             return False
         else:
             return True
+
+    def SetThrottleTime(self, secs):
+        self.THROTTLE_TIME = secs
 
     def DetermineMode(self, params):
         if "-d" in params:

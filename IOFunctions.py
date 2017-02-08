@@ -17,13 +17,17 @@ def CreateCaptureFolder(settings: IOSettings):
 def Save(title, fileStream, settings: IOSettings):
     destFolder = settings.StorageFolder
     if os.path.exists(destFolder) and os.path.isdir(destFolder):
-        thisFile = open(destFolder + "\\" + title + ".txt", 'w')
-        try:
-            thisFile.write(fileStream)
-        except:
-            e = sys.exc_info()[0]
-            print(" Error in IOFunctions : " + str(e))
-        thisFile.close()
+        destFile = destFolder + "\\" + title + ".txt"
+        if not os.path.exists(destFile):
+            thisFile = open(destFile, 'w')
+            try:
+                thisFile.write(str(fileStream))
+            except:
+                e = sys.exc_info()[0]
+                print(" Error in IOFunctions : " + str(e))
+                thisFile.close()
+                os.remove(destFile)
+            thisFile.close()
 
     return True
 

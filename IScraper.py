@@ -4,7 +4,9 @@ from PasteObj import *
 import re
 from DTOs import *
 import os
+import sys
 import threading
+import time
 
 """
 Originally I had this file the standard class for extracting from PasteBin, but decided to overwrite it with classes
@@ -33,6 +35,8 @@ class IScraper():
     def BuildSoup(self, res):
         return
 
-    ## When given the url, returns the request.get obj
     def GetRequest(self, url):
         return
+
+    def PrintDebugTitle(self, text: str):
+        print(text.center(80, '-'))
