@@ -139,6 +139,7 @@ class PasteBinScraper(IScraper):
                     continue
                 thisSoup = self.GetSoup(res)
                 self.SerializePublicPaste(uri, thisSoup)
+                self.History.append(title)
                 time.sleep(self.ExecutionOptions.THROTTLE_TIME)
 
     def PrintDebugTitle(self, text: str):
