@@ -3,6 +3,8 @@ import DTOs
 
 
 class PasteBinScraper(IScraper):
+    Retries = 5
+
     def __init__(self, exOptions: ExecutionOption, ioSet: IOSettings):
         self.Name = "PasteBin Scraper"
         self.CurrentUri = ""
@@ -21,8 +23,9 @@ class PasteBinScraper(IScraper):
                 res = self.GetRequest(self.CurrentUri)
             except:
                 e = sys.exc_info()[0]
-                print(" Error in Go, Failed to reach Pastebin.com! -> " + str(e))
-                return
+                print(" Error in Go, Failed to reach Pastebin.com! Trying Again...")
+                self.Retries -= 1
+                self.Go(url)
             bsoupAll = self.GetSoup(res)
             self.EnumerateRecentPastes(bsoupAll)
             #
