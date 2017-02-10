@@ -17,7 +17,12 @@ class PasteBinScraper(IScraper):
         # Go so many rounds
         while len(self.Items) <= 100:
             # We just keep hitting the main page, and looking at the recent pastes from there
-            res = self.GetRequest(self.CurrentUri)
+            try:
+                res = self.GetRequest(self.CurrentUri)
+            except:
+                e = sys.exc_info()[0]
+                print(" Error in Go, Failed to reach Pastebin.com! -> " + str(e))
+                return
             bsoupAll = self.GetSoup(res)
             self.EnumerateRecentPastes(bsoupAll)
             #
