@@ -126,7 +126,12 @@ class PasteBinScraper(IScraper):
             # Don't bother enumerating Posts we've seen before.
             if title not in self.History:
                 uri = Statics.PASTE_BIN_URI + tag.contents[0].attrs['href']
-                res = self.GetRequest(uri)
+                try:
+                    res = self.GetRequest(uri)
+                except:
+                    e = sys.exc_info()[0]
+                    print(" Error in EnumerateRecentPastes : " + str(e))
+                    continue
                 thisSoup = self.GetSoup(res)
                 self.SerializePublicPaste(uri, thisSoup)
                 time.sleep(self.ExecutionOptions.THROTTLE_TIME)
