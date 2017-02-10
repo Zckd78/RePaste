@@ -5,6 +5,10 @@ from DTOs import *
 from PasteObj import *
 
 
+def CapturePasteBinItem(paste: PublicPaste, settings: IOSettings):
+    Save(paste.Title, paste.Raw, settings)
+
+
 def CreateCaptureFolder(settings: IOSettings):
     folder = os.getcwd() + "\\" + settings.StorageFolder
     if not os.path.exists(folder):
@@ -14,24 +18,18 @@ def CreateCaptureFolder(settings: IOSettings):
     return
 
 
-def Save(title, fileStream, settings: IOSettings):
-    destFolder = settings.StorageFolder
+def Save(title: str, fileStream: str, settings: IOSettings):
+    destFolder = MergePaths(os.getcwd(),settings.StorageFolder)
     if os.path.exists(destFolder) and os.path.isdir(destFolder):
-        destFile = destFolder + "\\" + title + ".txt"
+        destFile = MergePaths(destFolder ,(title + ".txt"))
         if not os.path.exists(destFile):
-            thisFile = open(destFile, 'w')
             try:
-                thisFile.write(str(fileStream))
+                with io.open(destFile, 'w', encoding='utf8') as file:
+                    file.write(fileStream)
             except:
                 e = sys.exc_info()[0]
                 print(" Error in IOFunctions : " + str(e))
-                thisFile.close()
-                os.remove(destFile)
-            thisFile.close()
-
     return True
 
-
-def CapPastes(pastes: [PublicPaste], settings: IOSettings):
-    for paste in pastes.items():
-        Save(paste[0], paste[1].Raw, settings)
+def MergePaths(path1, path2):
+    return path1 + "\\" + path2

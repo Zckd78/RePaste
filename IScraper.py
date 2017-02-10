@@ -7,6 +7,7 @@ import os
 import sys
 import threading
 import time
+import IOFunctions
 
 """
 Originally I had this file the standard class for extracting from PasteBin, but decided to overwrite it with classes
@@ -32,7 +33,7 @@ class IScraper():
     def EnumerateRecentPastes(self, bsoupAll):
         return
 
-    def BuildSoup(self, res):
+    def GetSoup(self, res):
         return
 
     def GetRequest(self, url):
