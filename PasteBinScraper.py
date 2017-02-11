@@ -12,12 +12,14 @@ class PasteBinScraper(IScraper):
         self.History = []
         self.ExecutionOptions = exOptions
         self.IOSettings = ioSet
+        # Amount to increment on successive pre-Serialized Pastes
+        self.HaltAdjustInc = .15
 
     ## Root Function - Navigates to a page, and decides what to do from there.
     def Go(self, url: str):
         self.CurrentUri = url
         # Go so many rounds
-        while len(self.Items) <= 100:
+        while len(self.Items) <= 500:
             # We just keep hitting the main page, and looking at the recent pastes from there
             try:
                 res = self.GetRequest(self.CurrentUri)
@@ -48,10 +50,10 @@ class PasteBinScraper(IScraper):
             #                 self.ExecutionOptions.HALT_TIME) + " seconds !"
             #             self.PrintDebugTitle(title)
             #         self.EnumerateRecentPastes(bsoupAll)
-            #         time.sleep(self.ExecutionOptions.HALT_TIME)
+            #
 
             # Wait before the next round so we don't DoS poor PasteBin =(
-            time.sleep(self.ExecutionOptions.THROTTLE_TIME)
+            time.sleep(self.ExecutionOptions.ThrottleTime)
 
     # Simply returns a Beautiful Soup object
     def GetSoup(self, res):
@@ -131,9 +133,9 @@ class PasteBinScraper(IScraper):
         # Start Digging into those pastes and Serialize them
         for tag in sideMenu:
             title = tag.contents[0].attrs['href'].replace('/', '')
+            uri = Statics.PASTE_BIN_URI + tag.contents[0].attrs['href']
             # Don't bother enumerating Posts we've seen before.
             if title not in self.History:
-                uri = Statics.PASTE_BIN_URI + tag.contents[0].attrs['href']
                 try:
                     res = self.GetRequest(uri)
                 except:
@@ -141,9 +143,37 @@ class PasteBinScraper(IScraper):
                     print(" Error in EnumerateRecentPastes : " + str(e))
                     continue
                 thisSoup = self.GetSoup(res)
-                self.SerializePublicPaste(uri, thisSoup)
+
+                work = threading.Thread(self.SerializePublicPaste(uri, thisSoup), name="SerializePaste")
+                work.start()
                 self.History.append(title)
-                time.sleep(self.ExecutionOptions.THROTTLE_TIME)
+                time.sleep(self.ExecutionOptions.ThrottleTime)
+            else:
+                # Slow it down a bit...
+                haltTime = self.ExecutionOptions.HaltTime + self.HaltAdjustInc
+                time.sleep(haltTime)
+                self.HaltAdjustInc += self.HaltAdjustInc
+                title = "! Already Tried {" + uri + "} - Waiting " + str(haltTime) + " seconds !"
+                self.PrintDebugTitle(title)
+
+        # Handle the threads we started.
+        # Make sure they all finished before moving on.
+        workersAlive = True
+        while workersAlive:
+            workers = threading.enumerate()
+            for work in workers:
+                work.join()
+                if work.isAlive():
+                    workersAlive = True
+                elif not work.isAlive() :
+                    workersAlive = False
+
+
+        # Finally done with this round
+        return
+
+
+
 
     def PrintDebugTitle(self, text: str):
         output = "[> " + text + " <]"

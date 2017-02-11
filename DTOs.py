@@ -11,35 +11,34 @@ class IOSettings():
         self.StorageFolder = folder
 
 
-
 class ExecutionOption():
-
     def __init__(self):
-        self.EXECUTION_MODE = "Live"
-        self.VERBOSE_MODE = True
-        self.THROTTLE_TIME = .2
-        self.HALT_TIME = .5
+        self.ExecutionMode = "Live"
+        self.VerboseMode = True
+        self.ThrottleTime = .2
+        self.HaltTime = .5
+        self.Retries = 5
 
     def isVerbose(self):
-        if self.VERBOSE_MODE == True:
+        if self.VerboseMode == True:
             return True
         else:
             return False
 
     def SetThrottleTime(self, secs):
-        self.THROTTLE_TIME = secs
+        self.ThrottleTime = secs
 
     def SetHaltTime(self, secs):
-        self.HALT_TIME = secs
+        self.HaltTime = secs
 
     def DetermineVerbose(self, params):
         if "-v" in params:
-            self.VERBOSE_MODE = True
+            self.VerboseMode = True
         else:
-            self.VERBOSE_MODE = False
+            self.VerboseMode = False
 
     def DetermineMode(self, params):
         if "-d" in params:
-            self.EXECUTION_MODE = "Debug"
+            self.ExecutionMode = "Debug"
         else:
-            self.EXECUTION_MODE = "Live"
+            self.ExecutionMode = "Live"

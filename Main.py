@@ -17,8 +17,8 @@ def GatherPasteBin():
     params = "-d -v"
     options.DetermineMode(params)
     options.DetermineVerbose(params)
-    options.SetThrottleTime(.25)
-    options.SetHaltTime(.5)
+    options.SetThrottleTime(.33)
+    options.SetHaltTime(.75)
     # Set the IO Settings
     ioSet = IOSettings("PasteBin", "PasteBinCaps")
     IOFunctions.CreateCaptureFolder(ioSet)
