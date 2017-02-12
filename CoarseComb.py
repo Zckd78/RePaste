@@ -31,13 +31,13 @@ class CoarseComb():
             self.MatchingCriteria.append(self.FilterList[1])
 
         # Search for IPs without Port numbers
-        pattern = re.compile("\d{1,3}[.]\d{1,3}[.]\d{1,3}[.]\d{1,3}")
+        pattern = re.compile("\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}")
         result = pattern.search(self.InspectedText)
         if result:
             self.MatchingCriteria.append(self.FilterList[1])
 
         # Search for IPs with Port numbers
-        pattern = re.compile("\d{1,3}[.]\d{1,3}[.]\d{1,3}[.]\d{1,3}[.]\d{1,5}")
+        pattern = re.compile("\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,5}")
         result = pattern.search(self.InspectedText)
         if result:
             self.MatchingCriteria.append(self.FilterList[1])
