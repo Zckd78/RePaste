@@ -9,6 +9,8 @@ class IOSettings():
     def __init__(self, title, folder):
         self.Title = title
         self.StorageFolder = folder
+        # Number of matching criteria in order to save.
+        self.StorageThreshold = 0
 
 
 class ExecutionOption():

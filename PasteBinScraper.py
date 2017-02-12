@@ -13,7 +13,9 @@ class PasteBinScraper(IScraper):
         self.ExecutionOptions = exOptions
         self.IOSettings = ioSet
         # Amount to increment on successive pre-Serialized Pastes
-        self.HaltAdjustInc = .15
+        self.HaltAdjustIncOriginal = .025
+        self.HaltAdjustInc = .11
+        self.HaltTime = exOptions.HaltTime
 
     ## Root Function - Navigates to a page, and decides what to do from there.
     def Go(self, url: str):
@@ -117,8 +119,9 @@ class PasteBinScraper(IScraper):
             except:
                 e = sys.exc_info()[0]
                 print(" Error in PasteBinScraper : " + str(e))
-
-        self.Items[title] = PublicPaste(url, poster, title, date, expires, raw)
+        comb = CoarseComb()
+        matching = comb.CombText(raw)
+        self.Items[title] = PublicPaste(url, poster, title, date, expires, raw, matches=matching)
 
         # Save it to file right away
         IOFunctions.CapturePasteBinItem(self.Items[title], self.IOSettings)
@@ -146,28 +149,37 @@ class PasteBinScraper(IScraper):
 
                 work = threading.Thread(self.SerializePublicPaste(uri, thisSoup), name="SerializePaste")
                 work.start()
+                # Reset the half time
+                self.HaltTime = self.ExecutionOptions.HaltTime
+                self.HaltAdjustInc = self.HaltAdjustIncOriginal
+                # Add item to history to prevent duplicates
                 self.History.append(title)
                 time.sleep(self.ExecutionOptions.ThrottleTime)
             else:
                 # Slow it down a bit...
-                haltTime = self.ExecutionOptions.HaltTime + self.HaltAdjustInc
+                haltTime = self.HaltTime + self.HaltAdjustInc
                 time.sleep(haltTime)
-                self.HaltAdjustInc += self.HaltAdjustInc
+                if self.HaltAdjustInc < 1.0:
+                    self.HaltAdjustInc += self.HaltAdjustInc
+                else:
+                    self.HaltAdjustInc = self.HaltAdjustInc / 5
+
                 title = "! Already Tried {" + uri + "} - Waiting " + str(haltTime) + " seconds !"
                 self.PrintDebugTitle(title)
 
+        """
         # Handle the threads we started.
         # Make sure they all finished before moving on.
         workersAlive = True
         while workersAlive:
             workers = threading.enumerate()
             for work in workers:
-                work.join()
+                #work.join()
                 if work.isAlive():
                     workersAlive = True
                 elif not work.isAlive() :
                     workersAlive = False
-
+        """
 
         # Finally done with this round
         return

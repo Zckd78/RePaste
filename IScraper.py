@@ -8,6 +8,7 @@ import sys
 import threading
 import time
 import IOFunctions
+from CoarseComb import *
 
 """
 Originally I had this file the standard class for extracting from PasteBin, but decided to overwrite it with classes

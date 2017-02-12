@@ -6,7 +6,10 @@ from PasteObj import *
 
 
 def CapturePasteBinItem(paste: PublicPaste, settings: IOSettings):
-    Save(paste.Title, paste.Raw, settings)
+    if settings.StorageThreshold <= len(paste.MatchingCriteria):
+        # Only save worthy pastes
+        if len(paste.MatchingCriteria) > 0:
+            Save(paste, settings)
 
 
 def CreateCaptureFolder(settings: IOSettings):
@@ -18,18 +21,24 @@ def CreateCaptureFolder(settings: IOSettings):
     return
 
 
-def Save(title: str, fileStream: str, settings: IOSettings):
-    destFolder = MergePaths(os.getcwd(),settings.StorageFolder)
-    if os.path.exists(destFolder) and os.path.isdir(destFolder):
-        destFile = MergePaths(destFolder ,(title + ".txt"))
-        if not os.path.exists(destFile):
-            try:
-                with io.open(destFile, 'w', encoding='utf8') as file:
-                    file.write(fileStream)
-            except:
-                e = sys.exc_info()[0]
-                print(" Error in IOFunctions : " + str(e))
+def Save(paste: PublicPaste, settings: IOSettings):
+    foundCriteria = paste.MatchingCriteria[0]
+    destFolder = MergePaths(os.getcwd(), foundCriteria)
+
+    if not os.path.exists(destFolder):
+        os.mkdir(destFolder)
+
+    destFile = MergePaths(destFolder, (paste.Title + ".txt"))
+    if not os.path.exists(destFile):
+        try:
+            with io.open(destFile, 'w', encoding='utf8') as file:
+                file.write(paste.Raw)
+        except:
+            e = sys.exc_info()[0]
+            print(" Error in IOFunctions : " + str(e))
+
     return True
+
 
 def MergePaths(path1, path2):
     return path1 + "\\" + path2

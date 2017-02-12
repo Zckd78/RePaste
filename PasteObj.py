@@ -1,5 +1,5 @@
 class PublicPaste():
-    def __init__(self, url, poster=None, title=None, date=None, expires=None, raw=None, tag=None):
+    def __init__(self, url, poster=None, title=None, date=None, expires=None, raw=None, tag=None, matches=None):
         self.Poster = poster
         self.Title = title
         self.Date = date
@@ -7,3 +7,4 @@ class PublicPaste():
         self.Raw = raw
         self.Tag = tag
         self.Url = url
+        self.MatchingCriteria = matches
