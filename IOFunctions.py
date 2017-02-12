@@ -22,8 +22,14 @@ def CreateCaptureFolder(settings: IOSettings):
 
 
 def Save(paste: PublicPaste, settings: IOSettings):
-    foundCriteria = paste.MatchingCriteria[0]
-    destFolder = MergePaths(os.getcwd(), foundCriteria)
+    # Only place the paste
+    if settings.StorageThreshold > 0:
+        # Create a destination folder based on the first Matching Criteria
+        foundCriteria = paste.MatchingCriteria[0]
+        storageFolder = os.getcwd() + "\\" + settings.StorageFolder
+        destFolder = MergePaths(storageFolder, foundCriteria)
+    else:
+        destFolder = MergePaths(os.getcwd(), settings.StorageFolder)
 
     if not os.path.exists(destFolder):
         os.mkdir(destFolder)

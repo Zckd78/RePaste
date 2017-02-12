@@ -12,11 +12,16 @@ class IOSettings():
         # Number of matching criteria in order to save.
         self.StorageThreshold = 0
 
+    def SetStorageThreshold(self, val):
+        if val >= 0:
+            self.StorageThreshold = val
+
 
 class ExecutionOption():
     def __init__(self):
         self.ExecutionMode = "Live"
         self.VerboseMode = True
+        self.PasteGoal = 1000
         self.ThrottleTime = .2
         self.HaltTime = .5
         self.Retries = 5
@@ -32,6 +37,9 @@ class ExecutionOption():
 
     def SetHaltTime(self, secs):
         self.HaltTime = secs
+
+    def SetPasteGoal(self, goal):
+        self.PasteGoal = goal
 
     def DetermineVerbose(self, params):
         if "-v" in params:

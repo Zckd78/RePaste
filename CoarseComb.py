@@ -22,17 +22,22 @@ class CoarseComb():
         # Matches User/Pass
         if "username" in self.InspectedText:
             self.MatchingCriteria.append(self.FilterList[0])
-        elif "password" in self.InspectedText:
+        if "password" in self.InspectedText:
             self.MatchingCriteria.append(self.FilterList[0])
+        # Attempting to match user:pass type pastes
+        pattern = re.compile("\w[:]\w")
+        result = pattern.search(self.InspectedText)
+        if result:
+            self.MatchingCriteria.append(self.FilterList[1])
 
         # Search for IPs without Port numbers
-        pattern = re.compile("^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$")
+        pattern = re.compile("\d{1,3}[.]\d{1,3}[.]\d{1,3}[.]\d{1,3}")
         result = pattern.search(self.InspectedText)
         if result:
             self.MatchingCriteria.append(self.FilterList[1])
 
         # Search for IPs with Port numbers
-        pattern = re.compile("^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,5}$")
+        pattern = re.compile("\d{1,3}[.]\d{1,3}[.]\d{1,3}[.]\d{1,3}[.]\d{1,5}")
         result = pattern.search(self.InspectedText)
         if result:
             self.MatchingCriteria.append(self.FilterList[1])
@@ -57,6 +62,8 @@ class CoarseComb():
 
         # Matches Python import code
         if "import " in self.InspectedText:
+            self.MatchingCriteria.append(self.FilterList[6])
+        if "#!/usr/bin/python" in self.InspectedText:
             self.MatchingCriteria.append(self.FilterList[6])
 
         # Matches C++ #include code

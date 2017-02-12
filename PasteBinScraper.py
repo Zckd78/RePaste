@@ -10,9 +10,10 @@ class PasteBinScraper(IScraper):
         self.CurrentUri = ""
         self.Items = {}
         self.History = []
+        # Options DTOs for transferring settings between here and other classes
         self.ExecutionOptions = exOptions
         self.IOSettings = ioSet
-        # Amount to increment on successive pre-Serialized Pastes
+        # Variables pertaining to slowing down the speed of requesting pages
         self.HaltAdjustIncOriginal = .025
         self.HaltAdjustInc = .11
         self.HaltTime = exOptions.HaltTime
@@ -183,9 +184,6 @@ class PasteBinScraper(IScraper):
 
         # Finally done with this round
         return
-
-
-
 
     def PrintDebugTitle(self, text: str):
         output = "[> " + text + " <]"
