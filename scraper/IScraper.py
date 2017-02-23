@@ -33,3 +33,4 @@ class IScraper():
 
     def PrintDebugTitle(self, text: str):
         print(text.center(80, '-'))
+

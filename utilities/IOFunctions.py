@@ -24,9 +24,9 @@ def Save(paste: PublicPaste, settings: IOSettings):
     # Only place the paste
     if settings.StorageThreshold > 0:
         # Create a destination folder based on the first Matching Criteria
-        foundCriteria = paste.MatchingCriteria[0]
+        firstCriteria = paste.MatchingCriteria[0]
         storageFolder = os.getcwd() + "\\" + settings.StorageFolder
-        destFolder = MergePaths(storageFolder, foundCriteria)
+        destFolder = MergePaths(storageFolder, firstCriteria)
     else:
         destFolder = MergePaths(os.getcwd(), settings.StorageFolder)
 

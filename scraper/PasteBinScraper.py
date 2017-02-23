@@ -1,5 +1,4 @@
 from scraper.CoarseComb import *
-import scraper.IScraper
 from data.Structs import *
 import datetime
 import sys
@@ -13,7 +12,7 @@ class PasteBinScraper():
     Retries = 5
 
     def __init__(self, exOptions: ExecutionOption, ioSet: IOSettings):
-        self.Name = "PasteBin Scraper"
+        self.Name = "PasteBin.com"
         self.CurrentUri = ""
         self.Items = {}
         self.History = []
@@ -34,15 +33,19 @@ class PasteBinScraper():
         # Go so many rounds
         while len(self.Items) <= self.ExecutionOptions.PasteGoal:
             # We just keep hitting the main page, and looking at the recent pastes from there
-            try:
-                res = self.GetRequest(self.CurrentUri)
-            except:
-                e = sys.exc_info()[0]
-                print(" Error in Go, Failed to reach Pastebin.com! Trying Again...")
-                self.Retries -= 1
-                self.Go(url)
-            bsoupAll = self.GetSoup(res)
-            self.EnumerateRecentPastes(bsoupAll)
+            if self.Retries > 0:
+                try:
+                    res = self.GetRequest(self.CurrentUri)
+                except:
+                    e = sys.exc_info()[0]
+                    print(" Error in Go, Failed to reach %s Trying Again..." % self.Name)
+                    self.Retries -= 1
+                    self.Go(url)
+                bsoupAll = self.GetSoup(res)
+                self.EnumerateRecentPastes(bsoupAll)
+            else:
+                print(" Halting Go(), unable to reach %s -> SHUTTING DOWN!" % self.Name)
+                break
 
             # Wait before the next round so we don't DoS poor PasteBin =-D
             time.sleep(self.ExecutionOptions.ThrottleTime)
@@ -64,14 +67,14 @@ class PasteBinScraper():
         try:
             res.raise_for_status()
         except Exception as exc:
-            print('Error in IScraper: %s' % (exc))
+            print('Error in PasteBin Scraper: %s' % (exc))
             return
 
         return res
 
     """
     ------------------------ BEGIN SITE SPECIFIC CODE ------------------------
-    # Code here is specific to the Site we're Parsing and Capturing from
+    # Code here is specific to the Site we're Parsing and Capturing
     # When creating a new Scraper, edit code here to change it's function
     --------------------------------------------------------------------------
     """
@@ -166,29 +169,15 @@ class PasteBinScraper():
                     self.HaltAdjustInc += self.HaltAdjustInc
                 else:
                     self.HaltAdjustInc = self.HaltAdjustInc / 5
-
+                #
                 title = "! Already Tried {" + uri + "} - Waiting " + str(haltTime) + " seconds !"
                 self.PrintDebugTitle(title)
-
-        """
-        # Handle the threads we started.
-        # Make sure they all finished before moving on.
-        workersAlive = True
-        while workersAlive:
-            workers = threading.enumerate()
-            for work in workers:
-                #work.join()
-                if work.isAlive():
-                    workersAlive = True
-                elif not work.isAlive() :
-                    workersAlive = False
-        """
 
         # Finally done with this round
         return
 
 
-
+    # TODO - Finish this another time...
     def PrepareStatsReport(self):
         self.PrintDebugTitle("Statistic Report for " + self.Name)
         print("Number of Pastes Scraped: "+ len(self.History))
