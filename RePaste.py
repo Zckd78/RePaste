@@ -1,7 +1,6 @@
-from PasteBinScraper import *
-from DTOs import *
-import IOFunctions
-
+from scraper.PasteBinScraper import *
+from data.Structs import *
+from utilities import IOFunctions
 
 def Main():
     GatherPasteBin()
@@ -17,7 +16,7 @@ def GatherPasteBin():
     options.DetermineVerbose(params)
     options.SetThrottleTime(.5)
     options.SetHaltTime(1)
-    options.SetPasteGoal(2000)
+    options.SetPasteGoal(8000)
     # Set the IO Settings
     ioSet = IOSettings("PasteBin", "PasteBinCaps")
     IOFunctions.CreateCaptureFolder(ioSet)
@@ -26,7 +25,9 @@ def GatherPasteBin():
     scrap = PasteBinScraper(options, ioSet)
     scrap.Go(Statics.PASTE_BIN_URI)
 
+    # Eventually print out results here
+    # Have to add those trackers to a new DTO
     print("\n\rFinished!")
 
-
+# Light the coals in this crazy train.
 Main()

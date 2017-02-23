@@ -1,16 +1,42 @@
-## DTO stands for Data Transfer Objects.
-## I use these as custom object for transporting data around in functions and files.
+
+class PublicPaste():
+    def __init__(self,
+                 url="",
+                 poster="",
+                 title="",
+                 date="",
+                 expires="",
+                 raw="",
+                 tag=None,
+                 matches=None,
+                 length=0
+                 ):
+        self.Poster = poster
+        self.Title = title
+        self.Date = date
+        self.Expires = expires
+        self.Raw = raw
+        self.Tag = tag
+        self.Url = url
+        self.MatchingCriteria = matches
+        self.PasteLength = length
 
 class Statics():
     PASTE_BIN_URI = "http://pastebin.com"
 
+class Statistics():
+    def __init__(self):
+        self.SavedPastes = 0
+        self.RequestsMade = 0
+        self.ErrorsEncountered = 0
+        self.LargestPaste = ""
 
 class IOSettings():
-    def __init__(self, title, folder):
+    def __init__(self, title, folder, threshold=0):
         self.Title = title
         self.StorageFolder = folder
         # Number of matching criteria in order to save.
-        self.StorageThreshold = 0
+        self.StorageThreshold = threshold
 
     def SetStorageThreshold(self, val):
         if val >= 0:

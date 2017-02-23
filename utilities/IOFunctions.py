@@ -1,8 +1,7 @@
 import io
 import os
 import sys
-from DTOs import *
-from PasteObj import *
+from data.Structs import *
 
 
 def CapturePasteBinItem(paste: PublicPaste, settings: IOSettings):

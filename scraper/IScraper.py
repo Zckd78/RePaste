@@ -1,14 +1,5 @@
 import bs4
-import requests
-from PasteObj import *
-import re
-from DTOs import *
-import os
-import sys
-import threading
-import time
-import IOFunctions
-from CoarseComb import *
+from data.Structs import *
 
 """
 Originally I had this file the standard class for extracting from PasteBin, but decided to overwrite it with classes

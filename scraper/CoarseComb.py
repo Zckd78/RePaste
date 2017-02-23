@@ -20,9 +20,7 @@ class CoarseComb():
         self.InspectedText = text
 
         # Matches User/Pass
-        if "username" in self.InspectedText:
-            self.MatchingCriteria.append(self.FilterList[0])
-        if "password" in self.InspectedText:
+        if "username" in self.InspectedText or "password" in self.InspectedText:
             self.MatchingCriteria.append(self.FilterList[0])
         # Attempting to match user:pass type pastes
         pattern = re.compile("\w[:]\w")
@@ -60,10 +58,8 @@ class CoarseComb():
         if "eval(base64_decode(" in self.InspectedText or "eval(" in self.InspectedText:
             self.MatchingCriteria.append(self.FilterList[5])
 
-        # Matches Python import code
-        if "import " in self.InspectedText:
-            self.MatchingCriteria.append(self.FilterList[6])
-        if "#!/usr/bin/python" in self.InspectedText:
+        # Matches Python code
+        if "import " in self.InspectedText or "#!/usr/bin/python" in self.InspectedText:
             self.MatchingCriteria.append(self.FilterList[6])
 
         # Matches C++ #include code
