@@ -49,8 +49,8 @@ class PasteBinScraper():
 
             # Wait before the next round so we don't DoS poor PasteBin =-D
             time.sleep(self.ExecutionOptions.ThrottleTime)
-
-
+        self.PrepareStatsReport()
+        return
 
 
     # Simply returns a Beautiful Soup object
@@ -108,15 +108,16 @@ class PasteBinScraper():
         # Assign Raw data
         raw = (bSoupRaw.text)
 
-        if self.ExecutionOptions.isVerbose():
+        self.PrintTitle("Serializing [" + url + "] -> Length(" + str(len(raw)) + ")")
+
+        self.PrintVerbose("Paste Raw Snippet")
+        try:
+            # Print a fifth of the snippet, to gauge size offhand
             fifth = int((len(raw)) / 5)
-            self.PrintDebugTitle("Serializing [%s]" % (url))
-            self.PrintDebugTitle("Paste Raw Snippet")
-            try:
-                # Print a fifth of the snippet, to gauge size offhand
-                print(str(raw[0:fifth]))
-            except:
-                print(" Cannot Print Raw Paste Text, Unicode Error!!")
+            self.PrintVerbose(str(raw[0:fifth]))
+            fifth = ""  # Clear out this memory
+        except:
+            print(" Cannot Print Raw Paste Text, Unicode Error!!")
 
         # Creating the comb object to define the filters that match the paste
         comb = CoarseComb()
@@ -171,17 +172,16 @@ class PasteBinScraper():
                     self.HaltAdjustInc = self.HaltAdjustInc / 5
                 #
                 title = "! Already Tried {" + uri + "} - Waiting " + str(haltTime) + " seconds !"
-                self.PrintDebugTitle(title)
+                self.PrintTitle(title)
 
         # Finally done with this round
         return
 
-
     # TODO - Finish this another time...
     def PrepareStatsReport(self):
-        self.PrintDebugTitle("Statistic Report for " + self.Name)
-        print("Number of Pastes Scraped: "+ len(self.History))
-        print("")
+        if self.Name and self.History >= 1:
+            self.PrintTitle("Statistic Report for " + self.Name)
+            print("Number of Pastes Scraped: "+ len(self.History))
 
     """
 
@@ -204,9 +204,25 @@ class PasteBinScraper():
 
     """
 
-    def PrintDebugTitle(self, text: str):
+    def PrintTitle(self, text: str):
         output = "[> " + text + " <]"
         print(output.center(80, '~'))
+
+    def PrintVerboseTitle(self, text: str):
+        output = "[> " + text + " <]"
+        print(output.center(80, '~'))
+
+    def PrintVerbose(self, text: str):
+        if self.ExecutionOptions.VerboseMode:
+            self.PrintVerboseTitle(text)
+
+    def PrintDebugTitle(self, text: str):
+        output = "[) " + text + " (]"
+        print(output.center(80, '~'))
+
+    def PrintDebug(self, text: str):
+        if self.ExecutionOptions.DebugMode:
+            self.PrintDebugTitle(text)
 
     def GetTitle(self, url):
         return url.replace("http://pastebin.com/", '')

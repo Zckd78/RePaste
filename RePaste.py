@@ -11,7 +11,7 @@ def GatherPasteBin():
     # Set the Execution Options
     options = ExecutionOption()
     # These will be parameters when the program is live, setting here for testing.
-    params = "-d -v"
+    params = ""
     options.DetermineMode(params)
     options.DetermineVerbose(params)
     options.SetThrottleTime(.5)
@@ -20,7 +20,7 @@ def GatherPasteBin():
     # Set the IO Settings
     ioSet = IOSettings("PasteBin", "PasteBinCaps")
     IOFunctions.CreateCaptureFolder(ioSet)
-    ioSet.SetStorageThreshold(1)
+    ioSet.SetStorageThreshold(0)
     # Testing the PasteBin Scarper Interface
     scrap = PasteBinScraper(options, ioSet)
     scrap.Go(Statics.PASTE_BIN_URI)

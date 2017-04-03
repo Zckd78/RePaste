@@ -46,7 +46,8 @@ class IOSettings():
 class ExecutionOption():
     def __init__(self):
         self.ExecutionMode = "Live"
-        self.VerboseMode = True
+        self.DebugMode = False
+        self.VerboseMode = False
         self.PasteGoal = 1000
         self.ThrottleTime = .2
         self.HaltTime = .5
@@ -75,6 +76,6 @@ class ExecutionOption():
 
     def DetermineMode(self, params):
         if "-d" in params:
-            self.ExecutionMode = "Debug"
+            self.DebugMode = True
         else:
-            self.ExecutionMode = "Live"
+            self.DebugMode = False
