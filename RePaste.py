@@ -1,17 +1,18 @@
 from scraper.PasteBinScraper import *
 from data.Structs import *
 from utilities import IOFunctions
+import sys
 
 def Main():
-    GatherPasteBin()
+    args = sys.argv[1:]
+    GatherPasteBin(args)
 
 
-def GatherPasteBin():
+def GatherPasteBin(params):
     ######################## PasteBin Area ########################
     # Set the Execution Options
     options = ExecutionOption()
     # These will be parameters when the program is live, setting here for testing.
-    params = ""
     options.DetermineMode(params)
     options.DetermineVerbose(params)
     options.SetThrottleTime(.5)
@@ -23,10 +24,14 @@ def GatherPasteBin():
     ioSet.SetStorageThreshold(0)
     # Testing the PasteBin Scarper Interface
     scrap = PasteBinScraper(options, ioSet)
-    scrap.Go(Statics.PASTE_BIN_URI)
+    try:
+        scrap.Go(Statics.PASTE_BIN_URI)
+    except KeyboardInterrupt:
+        print("CTRL-C Pressed, Exiting...")
 
-    # Eventually print out results here
-    # Have to add those trackers to a new DTO
+
+    # Print out results here
+    scrap.PrepareStatsReport()
     print("\n\rFinished!")
 
 # Light the coals in this crazy train.

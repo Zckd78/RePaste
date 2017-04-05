@@ -48,6 +48,7 @@ class ExecutionOption():
         self.ExecutionMode = "Live"
         self.DebugMode = False
         self.VerboseMode = False
+        self.LoggingMode = True
         self.PasteGoal = 1000
         self.ThrottleTime = .2
         self.HaltTime = .5
@@ -71,11 +72,19 @@ class ExecutionOption():
     def DetermineVerbose(self, params):
         if "-v" in params:
             self.VerboseMode = True
+            print("---{ Activating Verbose Output }---")
         else:
             self.VerboseMode = False
 
     def DetermineMode(self, params):
         if "-d" in params:
             self.DebugMode = True
+            print("---{ Activating Debug Output }---")
+        else:
+            self.DebugMode = False
+
+        if "-d" in params:
+            self.DebugMode = True
+            print("---{ Logging Output  }---")
         else:
             self.DebugMode = False

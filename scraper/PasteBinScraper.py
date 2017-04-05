@@ -6,7 +6,8 @@ import time
 import requests
 import bs4
 import threading
-from utilities import IOFunctions
+import codecs
+from utilities import IOFunctions, DisplayFunctions
 
 class PasteBinScraper():
     Retries = 5
@@ -36,13 +37,13 @@ class PasteBinScraper():
             if self.Retries > 0:
                 try:
                     res = self.GetRequest(self.CurrentUri)
-                except:
-                    e = sys.exc_info()[0]
+                except Exception as excpt:
                     print(" Error in Go, Failed to reach %s Trying Again..." % self.Name)
                     self.Retries -= 1
                     self.Go(url)
-                bsoupAll = self.GetSoup(res)
-                self.EnumerateRecentPastes(bsoupAll)
+                if res is not None:
+                    bsoupAll = self.GetSoup(res)
+                    self.EnumerateRecentPastes(bsoupAll)
             else:
                 print(" Halting Go(), unable to reach %s -> SHUTTING DOWN!" % self.Name)
                 break
@@ -58,6 +59,7 @@ class PasteBinScraper():
         # Create the Beautiful Soup Object
         return bs4.BeautifulSoup(res.text, "html.parser")
 
+
     ## When given the url, returns the request.get obj
     def GetRequest(self, url):
         # Go grab the page
@@ -68,7 +70,8 @@ class PasteBinScraper():
             res.raise_for_status()
         except Exception as exc:
             print('Error in PasteBin Scraper: %s' % (exc))
-            return
+            res = None
+            return res
 
         return res
 
@@ -106,16 +109,15 @@ class PasteBinScraper():
         bSoupRaw = self.GetSoup(res)
 
         # Assign Raw data
-        raw = (bSoupRaw.text)
+        raw = bSoupRaw.text
 
-        self.PrintTitle("Serializing [" + url + "] -> Length(" + str(len(raw)) + ")")
+        rawASCII = self.StripNonUnicode(raw)
 
-        self.PrintVerbose("Paste Raw Snippet")
         try:
             # Print a fifth of the snippet, to gauge size offhand
+            DisplayFunctions.PrintVerbose(self.ExecutionOptions, "Paste Raw Snippet")
             fifth = int((len(raw)) / 5)
-            self.PrintVerbose(str(raw[0:fifth]))
-            fifth = ""  # Clear out this memory
+            DisplayFunctions.PrintVerbose(self.ExecutionOptions,str(rawASCII[0:fifth]))
         except:
             print(" Cannot Print Raw Paste Text, Unicode Error!!")
 
@@ -129,6 +131,9 @@ class PasteBinScraper():
             self.LargestPaste = publicPaste
         # Store the paste we serialized
         self.Items[title] = publicPaste
+
+        # Display the paste
+        self.OutputResults(publicPaste)
 
         # Save it to file right away
         IOFunctions.CapturePasteBinItem(self.Items[title], self.IOSettings)
@@ -152,16 +157,20 @@ class PasteBinScraper():
                     e = sys.exc_info()[0]
                     print(" Error in EnumerateRecentPastes : " + str(e))
                     continue
-                thisSoup = self.GetSoup(res)
 
-                work = threading.Thread(self.SerializePublicPaste(uri, thisSoup), name="SerializePaste")
-                work.start()
-                # Reset the half time
-                self.HaltTime = self.ExecutionOptions.HaltTime
-                self.HaltAdjustInc = self.HaltAdjustIncOriginal
-                # Add item to history to prevent duplicates
-                self.History.append(title)
-                time.sleep(self.ExecutionOptions.ThrottleTime)
+                if res is not None:
+                    thisSoup = self.GetSoup(res)
+
+                    work = threading.Thread(self.SerializePublicPaste(uri, thisSoup), name="SerializePaste")
+                    work.start()
+                    # Reset the half time
+                    self.HaltTime = self.ExecutionOptions.HaltTime
+                    self.HaltAdjustInc = self.HaltAdjustIncOriginal
+                    # Add item to history to prevent duplicates
+                    self.History.append(title)
+                    time.sleep(self.ExecutionOptions.ThrottleTime)
+                else:
+                    continue
             else:
                 # Slow it down a bit...
                 haltTime = self.HaltTime + self.HaltAdjustInc
@@ -172,7 +181,7 @@ class PasteBinScraper():
                     self.HaltAdjustInc = self.HaltAdjustInc / 5
                 #
                 title = "! Already Tried {" + uri + "} - Waiting " + str(haltTime) + " seconds !"
-                self.PrintTitle(title)
+                DisplayFunctions.PrintDebug(self.ExecutionOptions, title)
 
         # Finally done with this round
         return
@@ -180,7 +189,7 @@ class PasteBinScraper():
     # TODO - Finish this another time...
     def PrepareStatsReport(self):
         if self.Name and self.History >= 1:
-            self.PrintTitle("Statistic Report for " + self.Name)
+            DisplayFunctions.PrintTitle("Statistic Report for " + self.Name)
             print("Number of Pastes Scraped: "+ len(self.History))
 
     """
@@ -204,28 +213,36 @@ class PasteBinScraper():
 
     """
 
-    def PrintTitle(self, text: str):
-        output = "[> " + text + " <]"
-        print(output.center(80, '~'))
+    def OutputResults(self, paste:PublicPaste):
 
-    def PrintVerboseTitle(self, text: str):
-        output = "[> " + text + " <]"
-        print(output.center(80, '~'))
+        # Give some feedback
+        outline = "Serialized [" + paste.Url + "]"
 
-    def PrintVerbose(self, text: str):
-        if self.ExecutionOptions.VerboseMode:
-            self.PrintVerboseTitle(text)
+        # Display Title, if it's not the default
+        outline += "{ Poster: " + paste.Poster
 
-    def PrintDebugTitle(self, text: str):
-        output = "[) " + text + " (]"
-        print(output.center(80, '~'))
+        # Display Length of the paste
+        outline += ", Size: " + str(len(paste.Raw))
 
-    def PrintDebug(self, text: str):
-        if self.ExecutionOptions.DebugMode:
-            self.PrintDebugTitle(text)
+        # Display Matching criteria
+        if len(paste.MatchingCriteria) >= 1:
+            outline += ", Matches: "
+            count = 0
+            for match in paste.MatchingCriteria:
+                if match == paste.MatchingCriteria[0] and count == 0:
+                    outline += match
+                    count += 1
+                else:
+                    outline += ", " + match
+
+        outline += " }"
+        DisplayFunctions.PrintOutLine(outline)
 
     def GetTitle(self, url):
         return url.replace("http://pastebin.com/", '')
 
     def SavePaste(self, item: PublicPaste):
         IOFunctions.CapturePasteBinItem(item, self.IOSettings)
+
+    def StripNonUnicode(self, text):
+        return text.encode('ascii', 'ignore')

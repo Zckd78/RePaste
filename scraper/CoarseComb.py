@@ -29,15 +29,15 @@ class CoarseComb():
             self.MatchingCriteria.append(self.FilterList[1])
 
         # Search for IPs without Port numbers
-        pattern = re.compile("\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}")
-        result = pattern.search(self.InspectedText)
-        if result:
+        ipPattern = re.compile("\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}")
+        result = ipPattern.search(self.InspectedText)
+        if result and self.FilterList[1] not in self.MatchingCriteria:
             self.MatchingCriteria.append(self.FilterList[1])
 
         # Search for IPs with Port numbers
-        pattern = re.compile("\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,5}")
-        result = pattern.search(self.InspectedText)
-        if result:
+        ipPattern2 = re.compile("\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,5}")
+        result = ipPattern2.search(self.InspectedText)
+        if result and self.FilterList[1] not in self.MatchingCriteria:
             self.MatchingCriteria.append(self.FilterList[1])
 
         # Matches URL
