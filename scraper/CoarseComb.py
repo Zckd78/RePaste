@@ -4,13 +4,13 @@ import re
 class CoarseComb():
     FilterList = [
         'User_Pass',
-        'IP_Addr',
-        'URL',
+        'IP_Address',
+        'URI',
         'Bash_Script',
         'PHP_Code',
         'PHP_Eval',
         'Python_Code',
-        'Cpp_Code'
+        'C++_Code'
     ]
 
     def __init__(self):

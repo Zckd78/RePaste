@@ -4,6 +4,20 @@ import sys
 from data.Structs import *
 
 
+def SaveLog(outputLog):
+    folder = os.getcwd() + "\\" + "OutputLog"
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+
+    destFile = MergePaths(folder, ("OutputLog.txt"))
+    try:
+        with io.open(destFile, 'w', encoding='utf8') as file:
+            print("Saving output log to: " + destFile)
+            file.write(outputLog)
+    except IOError as ioerr:
+        print(" Error in IOFunctions : " + str(ioerr))
+
+
 def CapturePasteBinItem(paste: PublicPaste, settings: IOSettings):
     if settings.StorageThreshold <= len(paste.MatchingCriteria):
         # Only save worthy pastes
@@ -33,7 +47,12 @@ def Save(paste: PublicPaste, settings: IOSettings):
     if not os.path.exists(destFolder):
         os.mkdir(destFolder)
 
-    destFile = MergePaths(destFolder, (paste.Title + ".txt"))
+    # Append the title of the paste, given it's not the default "Untitled"
+    destFile = ""
+    if paste.Title == "Untitled":
+        destFile = MergePaths(destFolder, (paste.PasteID + ".txt"))
+    else:
+        destFile = MergePaths(destFolder, (paste.PasteID + "_" + paste.Title + ".txt"))
     if not os.path.exists(destFile):
         try:
             with io.open(destFile, 'w', encoding='utf8') as file:

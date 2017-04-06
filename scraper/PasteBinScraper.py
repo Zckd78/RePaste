@@ -17,6 +17,8 @@ class PasteBinScraper():
         self.CurrentUri = ""
         self.Items = {}
         self.History = []
+        self.OutputLog = ""
+        self.Interrupt = False
         # Options DTOs for transferring settings between here and other classes
         self.ExecutionOptions = exOptions
         self.IOSettings = ioSet
@@ -28,7 +30,10 @@ class PasteBinScraper():
 
     ## Root Function - Navigates to a page, and decides what to do from there.
     def Go(self, url: str):
-        print("Started on: " + time.ctime())
+        # Display and Save starting time
+        startTime = "Started on: " + time.ctime() + "\n"
+        self.OutputLog += startTime
+        print(startTime)
         self.CurrentUri = url
 
         # Go so many rounds
@@ -44,6 +49,9 @@ class PasteBinScraper():
                 if res is not None:
                     bsoupAll = self.GetSoup(res)
                     self.EnumerateRecentPastes(bsoupAll)
+                    # Catch when we've interrupted the program with Ctrl+C
+                    if self.Interrupt:
+                        return
             else:
                 print(" Halting Go(), unable to reach %s -> SHUTTING DOWN!" % self.Name)
                 break
@@ -84,7 +92,7 @@ class PasteBinScraper():
 
     def SerializePublicPaste(self, url: str, bsoupAll: bs4.BeautifulSoup):
 
-        title = self.GetTitle(url)
+        pasteID = self.GetPasteID(url)
         # Catching where sometimes the Poster doesn't have this element.
         posterSelect = bsoupAll.select(".paste_box_frame > .paste_box_info > .paste_box_line1 > h1")
         if len(posterSelect) > 0:
@@ -104,93 +112,102 @@ class PasteBinScraper():
             expires = "UnParsed"
 
         # Build out the Raw URI using the title.
-        rawURI = "http://www.pastebin.com/raw/" + title
+        rawURI = "http://www.pastebin.com/raw/" + pasteID
         res = self.GetRequest(rawURI)
+
+        # Sometimes we fail to get the page at this point. Just return, and we can do the next one.
+        if res is None:
+            return
+
         bSoupRaw = self.GetSoup(res)
 
         # Assign Raw data
         raw = bSoupRaw.text
+        fifth = int((len(raw)) / 5)
 
-        rawASCII = self.StripNonUnicode(raw)
-
-        try:
-            # Print a fifth of the snippet, to gauge size offhand
-            DisplayFunctions.PrintVerbose(self.ExecutionOptions, "Paste Raw Snippet")
-            fifth = int((len(raw)) / 5)
-            DisplayFunctions.PrintVerbose(self.ExecutionOptions,str(rawASCII[0:fifth]))
-        except:
-            print(" Cannot Print Raw Paste Text, Unicode Error!!")
+        # Print a fifth of the snippet, to gauge size offhand
+        DisplayFunctions.PrintVerbose(self.ExecutionOptions, "Paste Raw Snippet")
+        DisplayFunctions.PrintVerbose(self.ExecutionOptions,str(raw[0:fifth]))
 
         # Creating the comb object to define the filters that match the paste
         comb = CoarseComb()
         matching = comb.CombText(raw)
-        publicPaste = PublicPaste(url, poster, title, date, expires, raw, matches=matching)
+        publicPaste = PublicPaste(url, poster, pasteID, date, expires, raw, matches=matching)
         publicPaste.PasteLength = len(raw)
         # Store the largest paste to save later
         if publicPaste.PasteLength > self.LargestPaste.PasteLength:
             self.LargestPaste = publicPaste
         # Store the paste we serialized
-        self.Items[title] = publicPaste
+        self.Items[pasteID] = publicPaste
 
         # Display the paste
         self.OutputResults(publicPaste)
 
         # Save it to file right away
-        IOFunctions.CapturePasteBinItem(self.Items[title], self.IOSettings)
+        IOFunctions.CapturePasteBinItem(self.Items[pasteID], self.IOSettings)
         return
 
     def EnumerateRecentPastes(self, bsoupAll):
+        try:
+            # Grabs the list items (<li>) on the side for public pastes happening in real time.
+            sideMenu = bsoupAll.select("#menu_2 > .right_menu > li")
+            # We want to start from the oldest (bottom most) paste, so that we're grabbing newer pastes.
+            sideMenu.reverse()
+            # Start Digging into those pastes and Serialize them
+            for tag in sideMenu:
+                title = tag.contents[0].attrs['href'].replace('/', '')
+                uri = Statics.PASTE_BIN_URI + tag.contents[0].attrs['href']
+                # Don't bother enumerating Posts we've seen before.
+                if title not in self.History:
+                    try:
+                        res = self.GetRequest(uri)
+                    except Exception:
+                        e = sys.exc_info()[0]
+                        print(" Error in EnumerateRecentPastes : " + str(e))
+                        continue
+                    except KeyboardInterrupt:
+                        self.Interrupt = True
+                        return
 
-        # Grabs the list items (<li>) on the side for public pastes happening in real time.
-        sideMenu = bsoupAll.select("#menu_2 > .right_menu > li")
-        # We want to start from the oldest (bottom most) paste, so that we're grabbing newer pastes.
-        sideMenu.reverse()
-        # Start Digging into those pastes and Serialize them
-        for tag in sideMenu:
-            title = tag.contents[0].attrs['href'].replace('/', '')
-            uri = Statics.PASTE_BIN_URI + tag.contents[0].attrs['href']
-            # Don't bother enumerating Posts we've seen before.
-            if title not in self.History:
-                try:
-                    res = self.GetRequest(uri)
-                except:
-                    e = sys.exc_info()[0]
-                    print(" Error in EnumerateRecentPastes : " + str(e))
-                    continue
+                    if res is not None:
+                        thisSoup = self.GetSoup(res)
 
-                if res is not None:
-                    thisSoup = self.GetSoup(res)
-
-                    work = threading.Thread(self.SerializePublicPaste(uri, thisSoup), name="SerializePaste")
-                    work.start()
-                    # Reset the half time
-                    self.HaltTime = self.ExecutionOptions.HaltTime
-                    self.HaltAdjustInc = self.HaltAdjustIncOriginal
-                    # Add item to history to prevent duplicates
-                    self.History.append(title)
-                    time.sleep(self.ExecutionOptions.ThrottleTime)
+                        work = threading.Thread(self.SerializePublicPaste(uri, thisSoup), name="SerializePaste")
+                        work.start()
+                        # Reset the half time
+                        self.HaltTime = self.ExecutionOptions.HaltTime
+                        self.HaltAdjustInc = self.HaltAdjustIncOriginal
+                        # Add item to history to prevent duplicates
+                        self.History.append(title)
+                        time.sleep(self.ExecutionOptions.ThrottleTime)
+                    else:
+                        continue
                 else:
-                    continue
-            else:
-                # Slow it down a bit...
-                haltTime = self.HaltTime + self.HaltAdjustInc
-                time.sleep(haltTime)
-                if self.HaltAdjustInc < 1.0:
-                    self.HaltAdjustInc += self.HaltAdjustInc
-                else:
-                    self.HaltAdjustInc = self.HaltAdjustInc / 5
-                #
-                title = "! Already Tried {" + uri + "} - Waiting " + str(haltTime) + " seconds !"
-                DisplayFunctions.PrintDebug(self.ExecutionOptions, title)
+                    # Slow it down a bit...
+                    haltTime = self.HaltTime + self.HaltAdjustInc
+                    time.sleep(haltTime)
+                    if self.HaltAdjustInc < 1.0:
+                        self.HaltAdjustInc += self.HaltAdjustInc
+                    else:
+                        self.HaltAdjustInc = self.HaltAdjustInc / 5
+                    #
+                    title = "Already Tried [ " + uri + " ] - Waiting " + str(haltTime) + " seconds"
+                    DisplayFunctions.PrintDebug(self.ExecutionOptions, title)
 
-        # Finally done with this round
+            # Finally done with this round
+        except KeyboardInterrupt:
+            self.Interrupt = True
+            return
+
         return
 
-    # TODO - Finish this another time...
     def PrepareStatsReport(self):
-        if self.Name and self.History >= 1:
-            DisplayFunctions.PrintTitle("Statistic Report for " + self.Name)
-            print("Number of Pastes Scraped: "+ len(self.History))
+        if self.Name and len(self.History) >= 1:
+            print("\n\n")
+            title = "[> Statistic Report for " + self.Name + "<]"
+            DisplayFunctions.PrintTitle(title.center(80,'-'))
+            print("Number of Pastes Scraped: "+ str(len(self.History)))
+            print("Largest Paste Scraped: [ " + self.LargestPaste.PasteID + " ] { Size: " + str(len(self.LargestPaste.Raw)) + " }")
 
     """
 
@@ -216,10 +233,10 @@ class PasteBinScraper():
     def OutputResults(self, paste:PublicPaste):
 
         # Give some feedback
-        outline = "Serialized [" + paste.Url + "]"
+        outline = "Serialized [ " + paste.Url + " ]"
 
         # Display Title, if it's not the default
-        outline += "{ Poster: " + paste.Poster
+        outline += "{ Title: " + paste.Title
 
         # Display Length of the paste
         outline += ", Size: " + str(len(paste.Raw))
@@ -235,14 +252,13 @@ class PasteBinScraper():
                 else:
                     outline += ", " + match
 
-        outline += " }"
+        outline += " } \n"
         DisplayFunctions.PrintOutLine(outline)
+        self.OutputLog += outline
 
-    def GetTitle(self, url):
+    def GetPasteID(self, url):
         return url.replace("http://pastebin.com/", '')
 
     def SavePaste(self, item: PublicPaste):
         IOFunctions.CapturePasteBinItem(item, self.IOSettings)
 
-    def StripNonUnicode(self, text):
-        return text.encode('ascii', 'ignore')

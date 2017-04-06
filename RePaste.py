@@ -27,8 +27,11 @@ def GatherPasteBin(params):
     try:
         scrap.Go(Statics.PASTE_BIN_URI)
     except KeyboardInterrupt:
-        print("CTRL-C Pressed, Exiting...")
+        print("!!! --- {CTRL-C Pressed, Cleaning up...} --- !!!")
 
+    # Save the Output to Log file
+    if options.LoggingMode:
+        IOFunctions.SaveLog(scrap.OutputLog)
 
     # Print out results here
     scrap.PrepareStatsReport()

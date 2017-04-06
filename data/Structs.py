@@ -2,8 +2,8 @@
 class PublicPaste():
     def __init__(self,
                  url="",
-                 poster="",
                  title="",
+                 pasteID="",
                  date="",
                  expires="",
                  raw="",
@@ -11,8 +11,8 @@ class PublicPaste():
                  matches=None,
                  length=0
                  ):
-        self.Poster = poster
         self.Title = title
+        self.PasteID = pasteID
         self.Date = date
         self.Expires = expires
         self.Raw = raw
@@ -72,19 +72,19 @@ class ExecutionOption():
     def DetermineVerbose(self, params):
         if "-v" in params:
             self.VerboseMode = True
-            print("---{ Activating Verbose Output }---")
+            print("[*]---{ Activating Verbose Output }")
         else:
             self.VerboseMode = False
 
     def DetermineMode(self, params):
         if "-d" in params:
             self.DebugMode = True
-            print("---{ Activating Debug Output }---")
+            print("[*]---{ Activating Debug Output }")
         else:
             self.DebugMode = False
 
-        if "-d" in params:
-            self.DebugMode = True
-            print("---{ Logging Output  }---")
+        if "-l" in params:
+            self.LoggingMode = True
+            print("[+]---{ Output will be logged at the end of this session }")
         else:
-            self.DebugMode = False
+            self.LoggingMode = False
